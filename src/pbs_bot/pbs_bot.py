@@ -78,7 +78,6 @@ class PBSJobMonitor:
             for job in jobs:
                 if job.jobname.startswith(self.jobname):
                     job_str = f"{job.job_id}    {job.jobname}    {job.s}    {job.elap_time}\n"
-                    print(job_str)
                     if job.elap_time != '--':
                         try:
                             response = client.chat_postMessage(
