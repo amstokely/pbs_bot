@@ -1,11 +1,13 @@
-# main.py
+# cli.py
 
 import sys
 from pbs_bot import PBSJobMonitor
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: main.py <userid> <jobname> <slack_channel_id> <slack_token>")
+        print("Usage: python -m pbs_bot <userid> <jobname> "
+              "<slack_channel_id> <slack_token>")
+
         sys.exit(1)
 
     userid, jobname, slack_channel_id, slack_token = sys.argv[1:]
