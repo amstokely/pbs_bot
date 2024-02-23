@@ -3,9 +3,10 @@ import os
 import sys
 from pathlib import Path
 
-from pbs_bot import PBSJobMonitor
+#from pbs_bot import PBSJobMonitor
 from pbs_bot.secrets import encrypt_slack_token
 from pbs_bot.secrets import decrypt_slack_token
+from pbs_bot import register_job
 import json
 
 
@@ -23,19 +24,16 @@ def config():
              }, f)
 
 
-def register_job():
-    if len(sys.argv) != 4:
+def register():
+    if len(sys.argv) != 3:
         print(
-            "Usage: main.py <userid> <jobname> <key>")
+            "Usage: python -m pbs_bot <job_id> <key>")
         sys.exit(1)
 
-    userid, jobname, key = sys.argv[1:]
+    job_id, key = sys.argv[1:]
     config_dir = Path(os.environ['HOME']) / '.config' / 'pbs_bot'
     with open(config_dir / 'pbs_bot_config.json', 'r') as f:
         config = json.load(f)
         slack_token = decrypt_slack_token(config['slack_token'], key=key)
         slack_user_id = decrypt_slack_token(config['slack_user_id'], key=key)
-    monitor = PBSJobMonitor(userid, jobname, slack_user_id,
-                            slack_token)
-    print(slack_token, slack_user_id, userid, jobname)
-    # monitor.monitor_jobs_and_notify()
+    register_job(job_id)
