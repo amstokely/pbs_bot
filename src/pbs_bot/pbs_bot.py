@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from .pbs_bot_io import pbs_bot_dir
 
 
 class Job:
@@ -27,7 +28,6 @@ class Job:
         self.run_time = run_time
 
 
-
 def get_qstat_job_info(
         job_id
 ):
@@ -42,13 +42,36 @@ def register_job(
 ):
     qstat_job_info_output = get_qstat_job_info(job_id)
     job = Job(*qstat_job_info_output.splitlines()[2].split())
-    pbs_bot_dir = Path(os.environ['HOME']) / '.pbs_bot'
-    pbs_bot_dir.mkdir(parents=True, exist_ok=True)
-    with open(pbs_bot_dir / 'jobs.json', 'r+') as f:
-        registered_jobs = json.load(f)
-        registered_jobs[job_id] = job.__dict__
-        for k, v in registered_jobs.items():
-            print(k, v)
-    with open(pbs_bot_dir / 'jobs.json', 'w') as f:
-        json.dump(registered_jobs, f)
+    jobs_file = pbs_bot_dir / "jobs.json"
+    jobs = {}
+    if jobs_file.exists() and jobs_file.stat().st_size != 0:
+        with open(jobs_file, 'r+') as f:
+            jobs.update(json.load(f))
+    jobs[job_id] = job.__dict__
+    with open(jobs_file, 'w') as f:
+        json.dump(jobs, f)
 
+
+def post_job_to_slack(job_dict, key):
+
+    
+    client = WebClient(token=slack_token)
+
+    channel_id = "YOUR_CHANNEL_ID"  # ID of the channel you want to send message to
+    message = "Hello, world!"  # Your message
+
+    try:
+        response = client.chat_postMessage(channel=channel_id, text=message)
+    except SlackApiError as e:
+        # In case of error, print it out
+        print(f"Error sending message: {e}")
+
+
+def monitor_jobs(key):
+    jobs_file = pbs_bot_dir / "jobs.json"
+    jobs = {}
+    if jobs_file.exists() and jobs_file.stat().st_size != 0:
+        with open(jobs_file, 'r+') as f:
+            jobs.update(json.load(f))
+    for job_id, job in jobs.items():
+        post_job_to_slack(job_id, key)
